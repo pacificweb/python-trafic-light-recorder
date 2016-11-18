@@ -6,18 +6,31 @@ import logging
 import os
 import time
 import subprocess
-import picamera
 from datetime import datetime
+import argparse
+import picamera
 
 def main(args=None):
 
-	#TODO ARGV 
-	loop=69					# Number of seconds for a complete Green to Gree cycle
-	rectime=6				# Number of seconds of recording
-	samples=10				# Number of video to capture
+	parser = argparse.ArgumentParser(description='trafic-light-recorder')
+
+	parser.add_argument('-c',  '--cycle', dest='cycle', required=True, type=int,
+		help='Duration, in seconds, of a full trafic light cycle')
+
+	parser.add_argument('-d',  '--duration', dest='duration', required=True, type=int,
+		help='Duration, in seconds, of a recording')
+
+	parser.add_argument('-s',  '--samples', dest='samples', required=True, type=int,
+		help='Number of desired videos')
+
+	args =parser.parse_args(args if args is not None else sys.argv[1:])
+
+	loop=args.cycle				# Number of seconds for a complete Green to Gree cycle
+	rectime=args.duration		# Number of seconds of recording
+	samples=args.samples		# Number of video to capture
 
 	# Local variables
-	start=rectime/2			# Number of seconds for the startup before synchronize with loop
+	start=rectime/2				# Number of seconds for the startup before synchronize with loop
 
 	try:
 
