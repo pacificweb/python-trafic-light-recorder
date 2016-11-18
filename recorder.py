@@ -18,19 +18,19 @@ def main(args=None):
 		help='Duration, in seconds, of a full trafic light cycle')
 
 	parser.add_argument('-d',  '--duration', dest='duration', required=True, type=int,
-		help='Duration, in seconds, of a recording')
+		help='Duration, in seconds, of a recording for a cycle')
 
 	parser.add_argument('-s',  '--samples', dest='samples', required=True, type=int,
 		help='Number of desired videos')
 
-	args =parser.parse_args(args if args is not None else sys.argv[1:])
+	args = parser.parse_args(args if args is not None else sys.argv[1:])
 
-	loop=args.cycle				# Number of seconds for a complete Green to Gree cycle
-	rectime=args.duration		# Number of seconds of recording
-	samples=args.samples		# Number of video to capture
+	loop=args.cycle
+	rectime=args.duration
+	samples=args.samples
 
-	# Local variables
-	start=rectime/2				# Number of seconds for the startup before synchronize with loop
+	# Number of seconds for the startup to synchronize with trafic light loop
+	start=rectime/2
 
 	try:
 
