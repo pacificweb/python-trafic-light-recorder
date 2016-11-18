@@ -9,5 +9,4 @@
 
 # TODO 
 - Move the code in main body in a kind of recorder class (rec = new Recorder(cycle, duration, samples)
-- Pass in ARGS : trafic light cycle time, recording time for a cycle, number of videos to records
 - A demo on Youtube
