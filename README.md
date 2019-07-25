@@ -6,7 +6,3 @@
 - You have to start the script when the light turn to green
 - You have to set a recording duration (Example 10 seconds)
 - The script will record 5 seconds before turn to green and 5 seconds after turning to green.
-
-# TODO 
-- Move the code in main body in a kind of recorder class (rec = new Recorder(cycle, duration, samples)
-- A demo on Youtube
