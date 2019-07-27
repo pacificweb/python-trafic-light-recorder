@@ -5,7 +5,7 @@ import sys
 import logging
 import traceback
 import time
-#import subprocess
+# import subprocess
 from datetime import datetime
 import argparse
 import picamera
@@ -24,31 +24,30 @@ class Camera:
         self.device.ISO = 0
         self.device.brightness = 50
         self.device.contrast = 0
-        #self.device.framerate = 60
-
+        self.device.framerate = 30  # Default
         self.IsRecording = False
 
+
     # Capture a video according the recorder parameter
-    def capture(self, recorder):
+    def record(self, recorder):
+
         for i in range(0, recorder.samples):
-            if i == 0:
-                # First take
-                time.sleep(recorder.first_offset)
-            else:
-                time.sleep(recorder.offset)
-            filename = time.strftime('%Y%m%d%H%M%S')
-            print("Recording sample {2} of {0} begining {1}".format(recorder.samples, datetime.now(), i))
+
+            time.sleep(recorder.first_offset) if i == 0 else time.sleep(recorder.offset)
+
+            timestamp = time.strftime('%Y%m%d%H%M%S')
+
+            print("Recording sample {2} of {0} begining {1}".format(recorder.samples, timestamp, i))
             self.IsRecording = True
-            self.device.start_recording('%s.h264' % filename)
+            self.device.start_recording('%s.h264' % timestamp)
             self.device.wait_recording(recorder.duration)
             self.device.stop_recording()
             self.IsRecording = False
             print("Recording sample {2} of {0} complete {1}".format(recorder.samples, datetime.now(), i))
 
 
-
 class Recorder:
-    def __init__(self, cycle, duration, samples):
+    def __init__(self, cycle, duration, samples, json=None):
         self.cycle = cycle
         self.duration = duration
         self.samples = samples
@@ -67,10 +66,12 @@ class Recorder:
         self.camera.device.close()
 
     def run(self):
-        self.camera.capture(self)
+        self.camera.record (self)
 
 
 def main(args=None):
+
+    # TODO Passer un fichier json de config au lieu d'une batche de parametre
 
     parser = argparse.ArgumentParser(description='trafic-light-recorder')
 
@@ -83,7 +84,8 @@ def main(args=None):
 
     args = parser.parse_args(args if args is not None else sys.argv[1:])
 
-    recorder = Recorder(args.cycle, args.duration, args.samples)
+    config=None   # Futur
+    recorder = Recorder(args.cycle, args.duration, args.samples, config)
 
     print("CTRL+C to exit")
 
