@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 #-*- coding: utf-8 -*-
 
 import sys
 import logging
 import traceback
 import time
+import json
 # import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 import argparse
 import picamera
 
@@ -14,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 class Camera:
-    def __init__(self):
+    def __init__(self, config):
         self.device = picamera.PiCamera()
         time.sleep(2)
         self.device.resolution = (640, 480)
@@ -25,6 +26,8 @@ class Camera:
         self.device.brightness = 50
         self.device.contrast = 0
         self.device.framerate = 30  # Default
+        zoom = config['zoom']
+        self.device.zoom = (0.0, 0.0, zoom, zoom)
         self.IsRecording = False
 
 
@@ -35,65 +38,73 @@ class Camera:
 
             time.sleep(recorder.first_offset) if i == 0 else time.sleep(recorder.offset)
 
-            timestamp = time.strftime('%Y%m%d%H%M%S')
+            sample = i + 1
 
-            print("Recording sample {2} of {0} begining {1}".format(recorder.samples, timestamp, i))
+            filename = time.strftime('%Y%m%d%H%M%S')
+
+            now = datetime.now()
+            delta = now + timedelta(seconds=recorder.duration)
+
+            print("Recording sample {2} of {0} begining {1}".format(recorder.samples, now.strftime("%Y-%m-%d %H:%M:%S"), sample))
             self.IsRecording = True
-            self.device.start_recording('%s.h264' % timestamp)
+            self.device.start_recording('%s.h264' % filename)
             self.device.wait_recording(recorder.duration)
             self.device.stop_recording()
             self.IsRecording = False
-            print("Recording sample {2} of {0} complete {1}".format(recorder.samples, datetime.now(), i))
+            print("Recording sample {2} of {0} complete {1}".format(recorder.samples, delta.strftime("%Y-%m-%d %H:%M:%S"), sample))
 
 
 class Recorder:
-    def __init__(self, cycle, duration, samples, json=None):
-        self.cycle = cycle
-        self.duration = duration
-        self.samples = samples
+    def __init__(self, app_config, rec_config):
+        self.cycle = rec_config['cycle']
+        self.duration = rec_config['duration']
+        self.samples = rec_config['samples']
 
         # Number of seconds for the startup to synchronize with trafic light cycle
         self.start = self.duration / 2
 
-        self.first_offset = self.cycle - self.duration / 2
+        # First offset of the 1st video
+        self.first_offset = self.cycle - self.start
+
+        # Offset for the next X videos
         self.offset = self.cycle - self.duration
 
-        self.camera = Camera()
+        self.camera = Camera(app_config)
 
     def stop(self):
         if self.camera.IsRecording:
             self.camera.device.stop_recording()
         self.camera.device.close()
 
-    def run(self):
-        self.camera.record (self)
+    def record(self):
+        self.camera.record(self)
 
 
 def main(args=None):
 
-    # TODO Passer un fichier json de config au lieu d'une batche de parametre
-
     parser = argparse.ArgumentParser(description='trafic-light-recorder')
 
-    parser.add_argument('-c', '--cycle', dest='cycle',
-        required=True, type=int, help='Duration in seconds of light cycle')
-    parser.add_argument('-d', '--duration', dest='duration',
-        required=True, type=int, help='Duration in seconds of a recording for a cycle')
-    parser.add_argument('-s', '--samples', dest='samples',
-        required=True, type=int, help='Number of desired videos')
+    parser.add_argument('-f', '--filename', dest='filename',
+        required=True, help='JSON filename containing recording parameters')
 
     args = parser.parse_args(args if args is not None else sys.argv[1:])
 
-    config=None   # Futur
-    recorder = Recorder(args.cycle, args.duration, args.samples, config)
+    # Global config
+    with open('global.json') as global_data:
+        global_config = json.load(global_data)
+
+    # Recording configuration
+    with open(args.filename) as record_data:
+        record_config = json.load(record_data)
+
+    # The recorder - A Panasonic VHS 4-Head Hi-Fi Stereo
+    recorder = Recorder(global_config, record_config)
 
     print("CTRL+C to exit")
-
     try:
 
-        key = raw_input("Press a key when the trafic light turn to GREEN # ")  # lint:ok
-
-        recorder.run()
+        key = input("Press a key when the trafic light turn to GREEN # ")  # lint:ok
+        recorder.record()
 
     except (KeyboardInterrupt):
         print('interrupt received')
