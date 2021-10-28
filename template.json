@@ -1,0 +1,6 @@
+{ 
+  "cycle": 50,
+  "samples" : 5,
+  "duration" : 10,
+  "description" : "IntersectionName"
+}
